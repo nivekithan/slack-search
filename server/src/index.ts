@@ -6,6 +6,9 @@ import {
   sendAcknowledgementResponse,
   verifyRequestIsFromSlack,
 } from "./slack/hanldeSlackEventRequests";
+import { slackEvent } from "./slack/eventSchema";
+import { prisma } from "./prisma";
+import { nanoid } from "nanoid";
 
 const app = express();
 
@@ -40,13 +43,31 @@ app.post(
   verifyRequestIsFromSlack,
   passUrlVerificationChallenge,
   sendAcknowledgementResponse,
-  async (req, res, next) => {
+  async (req, _, next) => {
     /**
-     * Acknowledge request has already been sent to slack.
+     * Acknowledge response has already been sent to slack.
      * Therefore we should not use res anymore.
      */
     try {
-      const body = req.body;
+      const body = slackEvent.parse(req.body);
+
+      const innerEvent = body.event;
+      const innerEventType = innerEvent.type;
+
+      if (innerEventType === "message") {
+        // Save message to database
+        await prisma.message.create({
+          data: {
+            channelId: innerEvent.channel,
+            userId: innerEvent.user,
+            message: innerEvent.text,
+            messageTs: innerEvent.ts,
+            id: nanoid(),
+          },
+        });
+
+        console.log("Message saved to database");
+      }
     } catch (err) {
       next(err);
     }

@@ -6,7 +6,7 @@ const main = async () => {
     absWorkingDir: path.resolve(__dirname, ".."),
     entryPoints: ["./src/index.ts"],
     bundle: true,
-    external: ["./node_modules/*"],
+    external: ["./node_modules/*", "zod", "nanoid"],
     platform: "node",
     format: "cjs",
     target: "es2018",
