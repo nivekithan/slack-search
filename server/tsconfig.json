@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+      "strict": true,
+      "allowJs": true,
+      "esModuleInterop": true,
+      "target": "es2018",
+      "isolatedModules": true,
+      "module": "commonjs",
+      "moduleResolution": "node",
+      "skipLibCheck": true,
+      "noEmit": true
+    },
+    "include": ["src", "scripts"],
+    "exclude": ["node_modules"]
+  }
