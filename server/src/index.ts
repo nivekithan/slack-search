@@ -3,6 +3,7 @@ import { text as parseTextBody } from "body-parser";
 import { expressAsyncHanlder } from "./expressAsyncHandler";
 import {
   passUrlVerificationChallenge,
+  sendAcknowledgementResponse,
   verifyRequestIsFromSlack,
 } from "./slack/hanldeSlackEventRequests";
 
@@ -38,10 +39,14 @@ app.post(
   parseTextBody({ type: () => true }),
   verifyRequestIsFromSlack,
   passUrlVerificationChallenge,
+  sendAcknowledgementResponse,
   async (req, res, next) => {
+    /**
+     * Acknowledge request has already been sent to slack.
+     * Therefore we should not use res anymore.
+     */
     try {
       const body = req.body;
-      console.log(body);
     } catch (err) {
       next(err);
     }

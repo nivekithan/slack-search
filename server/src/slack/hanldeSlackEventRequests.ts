@@ -92,4 +92,14 @@ export const passUrlVerificationChallenge = expressAsyncHanlder(
   }
 );
 
-
+/**
+ * Before processing the slack evebt request we have to send a
+ * acknowledgement response to slack before 3secs. Otherwise slack
+ * will send the request again.
+ */
+export const sendAcknowledgementResponse = expressAsyncHanlder(
+  async (req, res, next) => {
+    await res.send().end();
+    next();
+  }
+);
