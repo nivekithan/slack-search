@@ -50,8 +50,17 @@ app.post(
      * Therefore we should not use res anymore.
      */
     try {
-      const eventPayload = slackEvents.parse(req.body);
+      const eventPayloadParseRes = slackEvents.safeParse(req.body);
 
+      if (!eventPayloadParseRes.success) {
+        /**
+         * This event payload is not something which we are interested in/supported.
+         * Therefore we should not do anything and ignore this event
+         */
+        return;
+      }
+
+      const eventPayload = eventPayloadParseRes.data;
       const event = eventPayload.event;
       const eventType = event.type;
 
