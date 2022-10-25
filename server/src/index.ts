@@ -7,8 +7,6 @@ import {
   verifyRequestIsFromSlack,
 } from "./slack/slackMiddleware";
 import { slackEvents } from "./slack/eventSchema";
-import { prisma } from "./prisma";
-import { nanoid } from "nanoid";
 import { hanldeMessageSentEvent } from "./slack/handleMessageSentEvent";
 
 const app = express();
