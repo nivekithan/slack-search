@@ -42,33 +42,29 @@ app.post(
   verifyRequestIsFromSlack,
   passUrlVerificationChallenge,
   sendAcknowledgementResponse,
-  async (req, _, next) => {
+  expressAsyncHanlder(async (req, _) => {
     /**
      * Acknowledge response has already been sent to slack.
      * Therefore we should not use res anymore.
      */
-    try {
-      const eventPayloadParseRes = slackEvents.safeParse(req.body);
+    const eventPayloadParseRes = slackEvents.safeParse(req.body);
 
-      if (!eventPayloadParseRes.success) {
-        /**
-         * This event payload is not something which we are interested in/supported.
-         * Therefore we should not do anything and ignore this event
-         */
-        return;
-      }
-
-      const eventPayload = eventPayloadParseRes.data;
-      const event = eventPayload.event;
-      const eventType = event.type;
-
-      if (eventType === "message") {
-        return hanldeMessageSentEvent(eventPayload);
-      }
-    } catch (err) {
-      next(err);
+    if (!eventPayloadParseRes.success) {
+      /**
+       * This event payload is not something which we are interested in/supported.
+       * Therefore we should not do anything and ignore this event
+       */
+      return;
     }
-  }
+
+    const eventPayload = eventPayloadParseRes.data;
+    const event = eventPayload.event;
+    const eventType = event.type;
+
+    if (eventType === "message") {
+      return hanldeMessageSentEvent(eventPayload);
+    }
+  })
 );
 
 app.listen(8080, () => {
