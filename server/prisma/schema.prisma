@@ -17,6 +17,7 @@ model Message {
   userId         String
   messageTs      String
   topicMessageTs String?
+  repliesCount   Int     @default(0)
 
   channel   Channel   @relation(fields: [channelId, teamId], references: [channelId, teamId])
   topic     Message?  @relation("Thread", fields: [topicMessageTs, channelId, teamId], references: [messageTs, channelId, teamId])

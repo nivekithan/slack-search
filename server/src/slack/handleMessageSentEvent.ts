@@ -31,59 +31,87 @@ export const hanldeMessageSentEvent = async (eventPaylod: MessageSentEvent) => {
   ]);
   const isMessagePartOfTopic = event.thread_ts !== undefined;
 
-  return prisma.message.create({
-    data: {
-      id: nanoid(),
-      message: event.text,
-      messageTs: event.ts,
-      slackUser: {
-        connectOrCreate: {
-          where: {
-            teamId_userId: {
+  return Promise.all([
+    prisma.message.create({
+      data: {
+        id: nanoid(),
+        message: event.text,
+        messageTs: event.ts,
+        slackUser: {
+          connectOrCreate: {
+            where: {
+              teamId_userId: {
+                teamId: teamId,
+                userId: userId,
+              },
+            },
+            create: {
+              id: nanoid(),
               teamId: teamId,
               userId: userId,
+              userRealName: userInfo.real_name,
+              /**
+               * TODO: Automatically create a nickname for the user
+               * and the update the userNickName with that value
+               */
+              userNickName: `nick-${userInfo.real_name}`,
             },
           },
-          create: {
-            id: nanoid(),
-            teamId: teamId,
-            userId: userId,
-            userRealName: userInfo.real_name,
-            /**
-             * TODO: Automatically create a nickname for the user
-             * and the update the userNickName with that value 
-             */
-            userNickName: `nick-${userInfo.real_name}`,
-          },
         },
-      },
-      topic: isMessagePartOfTopic
-        ? {
-            connect: {
-              channelId_messageTs_teamId: {
+        topic: isMessagePartOfTopic
+          ? {
+              connect: {
+                channelId_messageTs_teamId: {
+                  channelId: channelId,
+                  messageTs: event.thread_ts!,
+                  teamId: teamId,
+                },
+              },
+            }
+          : undefined,
+        channel: {
+          connectOrCreate: {
+            where: {
+              teamId_channelId: {
                 channelId: channelId,
-                messageTs: event.thread_ts!,
                 teamId: teamId,
               },
             },
-          }
-        : undefined,
-      channel: {
-        connectOrCreate: {
-          where: {
-            teamId_channelId: {
+            create: {
               channelId: channelId,
+              channelName: channelInfo.name,
+              id: nanoid(),
               teamId: teamId,
             },
           },
-          create: {
-            channelId: channelId,
-            channelName: channelInfo.name,
-            id: nanoid(),
-            teamId: teamId,
-          },
         },
       },
-    },
-  });
+    }),
+    /**
+     * Increases repliesCount of message if the new message created previously is
+     * a reply to a message whose messageTs is equal to thread_ts
+     *
+     */
+    (async function increaseRepliesCount() {
+      if (isMessagePartOfTopic) {
+        return prisma.message.update({
+          where: {
+            channelId_messageTs_teamId: {
+              channelId,
+              messageTs: event.thread_ts!,
+              teamId,
+            },
+          },
+          /**
+           * Increment the repliesCount atomically by 1
+           */
+          data: {
+            repliesCount: {
+              increment: 1,
+            },
+          },
+        });
+      }
+    })(),
+  ]);
 };
