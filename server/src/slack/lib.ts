@@ -33,3 +33,31 @@ export const getChannelInfo = async ({
 
   return slackChannelSchema.parse(channelInfo.channel);
 };
+
+export type GetUserInfoArgs = {
+  userId: string;
+  accessToken: string;
+};
+
+/**
+ * This schema is incomplete, containing fields only needed for now.
+ * If in future more fields are needed, we have to update this schema.
+ *
+ * For complete schema look at https://api.slack.com/methods/users.info#examples
+ */
+const slackUserSchema = z.object({
+  id: z.string(),
+  real_name: z.string(),
+  is_bot: z.boolean(),
+});
+
+export const getUserInfo = async ({ accessToken, userId }: GetUserInfoArgs) => {
+  const webClient = new WebClient(accessToken);
+  const userInfoRes = await webClient.users.info({ user: userId });
+
+  if (!userInfoRes.ok) {
+    throw new Error(userInfoRes.error);
+  }
+
+  return slackUserSchema.parse(userInfoRes.user);
+};

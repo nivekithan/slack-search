@@ -18,10 +18,11 @@ model Message {
   messageTs      String
   topicMessageTs String?
 
-  channel Channel   @relation(fields: [channelId, teamId], references: [channelId, teamId])
-  topic   Message?  @relation("Thread", fields: [topicMessageTs, channelId, teamId], references: [messageTs, channelId, teamId])
-  replies Message[] @relation("Thread")
-  message String
+  channel   Channel   @relation(fields: [channelId, teamId], references: [channelId, teamId])
+  topic     Message?  @relation("Thread", fields: [topicMessageTs, channelId, teamId], references: [messageTs, channelId, teamId])
+  replies   Message[] @relation("Thread")
+  slackUser SlackUser @relation(fields: [userId, teamId], references: [userId, teamId])
+  message   String
 
   @@unique([channelId, messageTs, teamId])
 }
@@ -36,4 +37,15 @@ model Channel {
   Message Message[]
 
   @@unique([teamId, channelId])
+}
+
+model SlackUser {
+  id           String    @id
+  teamId       String
+  userId       String
+  userRealName String
+  userNickName String
+  messages     Message[]
+
+  @@unique([teamId, userId])
 }

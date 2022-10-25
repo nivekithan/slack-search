@@ -2,7 +2,7 @@ import { nanoid } from "nanoid";
 import { prisma } from "../prisma";
 import { getEnvVariable } from "../utils";
 import { MessageSentEvent } from "./eventSchema";
-import { getChannelInfo } from "./lib";
+import { getChannelInfo, getUserInfo } from "./lib";
 
 /**
  * This function should be called when a message is sent in a channel. That message is
@@ -19,13 +19,16 @@ export const hanldeMessageSentEvent = async (eventPaylod: MessageSentEvent) => {
   const event = eventPaylod.event;
   const channelId = event.channel;
   const teamId = eventPaylod.team_id;
+  const userId = event.user;
 
   // TODO: Get Token for each workspace from the
   // database and use it to get channel info
 
   const accessToken = getEnvVariable("SLACK_BOT_TOKEN");
-  const channelInfo = await getChannelInfo({ accessToken, channelId });
-
+  const [channelInfo, userInfo] = await Promise.all([
+    getChannelInfo({ accessToken, channelId }),
+    getUserInfo({ accessToken, userId }),
+  ]);
   const isMessagePartOfTopic = event.thread_ts !== undefined;
 
   return prisma.message.create({
@@ -33,7 +36,27 @@ export const hanldeMessageSentEvent = async (eventPaylod: MessageSentEvent) => {
       id: nanoid(),
       message: event.text,
       messageTs: event.ts,
-      userId: event.user,
+      slackUser: {
+        connectOrCreate: {
+          where: {
+            teamId_userId: {
+              teamId: teamId,
+              userId: userId,
+            },
+          },
+          create: {
+            id: nanoid(),
+            teamId: teamId,
+            userId: userId,
+            userRealName: userInfo.real_name,
+            /**
+             * TODO: Automatically create a nickname for the user
+             * and the update the userNickName with that value 
+             */
+            userNickName: `nick-${userInfo.real_name}`,
+          },
+        },
+      },
       topic: isMessagePartOfTopic
         ? {
             connect: {
