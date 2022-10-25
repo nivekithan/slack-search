@@ -1,4 +1,4 @@
-export type ENV_VARIABLES = "SLACK_SIGNING_SECRET";
+export type ENV_VARIABLES = "SLACK_SIGNING_SECRET" | "SLACK_BOT_TOKEN";
 
 export const getEnvVariable = (variable: ENV_VARIABLES): string => {
   const envVariableValue = process.env[variable];

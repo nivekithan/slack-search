@@ -18,4 +18,7 @@ export const messageEvent = getEventSchema(
   })
 );
 
-export const slackEvent = messageEvent;
+export type MessageSentEvent = z.infer< typeof messageEvent>;
+
+export const slackEvents = messageEvent;
+export type SlackEvents = z.infer<typeof slackEvents>;

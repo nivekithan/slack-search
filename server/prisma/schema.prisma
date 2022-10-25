@@ -12,10 +12,25 @@ datasource db {
 
 model Message {
   id        String @id
+  teamId    String
   channelId String
   userId    String
   messageTs String
 
-  message   String
-  @@unique([channelId, userId, messageTs])
+  channel Channel @relation(fields: [channelId, teamId], references: [channelId, teamId])
+  message String
+
+  @@unique([channelId, userId, messageTs, teamId])
+}
+
+model Channel {
+  id        String @id
+  teamId    String
+  channelId String
+
+  channelName String
+
+  Message Message[]
+
+  @@unique([teamId, channelId])
 }

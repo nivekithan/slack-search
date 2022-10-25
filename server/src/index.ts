@@ -5,10 +5,11 @@ import {
   passUrlVerificationChallenge,
   sendAcknowledgementResponse,
   verifyRequestIsFromSlack,
-} from "./slack/hanldeSlackEventRequests";
-import { slackEvent } from "./slack/eventSchema";
+} from "./slack/slackMiddleware";
+import { slackEvents } from "./slack/eventSchema";
 import { prisma } from "./prisma";
 import { nanoid } from "nanoid";
+import { hanldeMessageSentEvent } from "./slack/handleMessageSentEvent";
 
 const app = express();
 
@@ -49,24 +50,13 @@ app.post(
      * Therefore we should not use res anymore.
      */
     try {
-      const body = slackEvent.parse(req.body);
+      const eventPayload = slackEvents.parse(req.body);
 
-      const innerEvent = body.event;
-      const innerEventType = innerEvent.type;
+      const event = eventPayload.event;
+      const eventType = event.type;
 
-      if (innerEventType === "message") {
-        // Save message to database
-        await prisma.message.create({
-          data: {
-            channelId: innerEvent.channel,
-            userId: innerEvent.user,
-            message: innerEvent.text,
-            messageTs: innerEvent.ts,
-            id: nanoid(),
-          },
-        });
-
-        console.log("Message saved to database");
+      if (eventType === "message") {
+        return hanldeMessageSentEvent(eventPayload);
       }
     } catch (err) {
       next(err);
