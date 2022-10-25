@@ -15,10 +15,11 @@ export const messageEvent = getEventSchema(
     user: z.string(),
     text: z.string(),
     ts: z.string(),
+    thread_ts: z.string().optional(),
   })
 );
 
-export type MessageSentEvent = z.infer< typeof messageEvent>;
+export type MessageSentEvent = z.infer<typeof messageEvent>;
 
 export const slackEvents = messageEvent;
 export type SlackEvents = z.infer<typeof slackEvents>;

@@ -11,16 +11,19 @@ datasource db {
 }
 
 model Message {
-  id        String @id
-  teamId    String
-  channelId String
-  userId    String
-  messageTs String
+  id             String  @id
+  teamId         String
+  channelId      String
+  userId         String
+  messageTs      String
+  topicMessageTs String?
 
-  channel Channel @relation(fields: [channelId, teamId], references: [channelId, teamId])
+  channel Channel   @relation(fields: [channelId, teamId], references: [channelId, teamId])
+  topic   Message?  @relation("Thread", fields: [topicMessageTs, channelId, teamId], references: [messageTs, channelId, teamId])
+  replies Message[] @relation("Thread")
   message String
 
-  @@unique([channelId, userId, messageTs, teamId])
+  @@unique([channelId, messageTs, teamId])
 }
 
 model Channel {
