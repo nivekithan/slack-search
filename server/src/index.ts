@@ -7,6 +7,7 @@ import {
   verifyRequestIsFromSlack,
 } from "./slack/slackMiddleware";
 import { slackEventHandler } from "./slack/eventHandler";
+import { api } from "./api";
 
 const app = express();
 
@@ -34,6 +35,11 @@ app.use(
     return res.send("OK");
   })
 );
+
+/**
+ * API for frontend
+ */
+app.use("/api/v1/", api);
 
 app.post(
   "/api/v1/slack/events",
