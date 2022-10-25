@@ -6,8 +6,7 @@ import {
   sendAcknowledgementResponse,
   verifyRequestIsFromSlack,
 } from "./slack/slackMiddleware";
-import { slackEvents } from "./slack/eventSchema";
-import { hanldeMessageSentEvent } from "./slack/handleMessageSentEvent";
+import { slackEventHandler } from "./slack/eventHandler";
 
 const app = express();
 
@@ -42,29 +41,7 @@ app.post(
   verifyRequestIsFromSlack,
   passUrlVerificationChallenge,
   sendAcknowledgementResponse,
-  expressAsyncHanlder(async (req, _) => {
-    /**
-     * Acknowledge response has already been sent to slack.
-     * Therefore we should not use res anymore.
-     */
-    const eventPayloadParseRes = slackEvents.safeParse(req.body);
-
-    if (!eventPayloadParseRes.success) {
-      /**
-       * This event payload is not something which we are interested in/supported.
-       * Therefore we should not do anything and ignore this event
-       */
-      return;
-    }
-
-    const eventPayload = eventPayloadParseRes.data;
-    const event = eventPayload.event;
-    const eventType = event.type;
-
-    if (eventType === "message") {
-      return hanldeMessageSentEvent(eventPayload);
-    }
-  })
+  slackEventHandler
 );
 
 app.listen(8080, () => {
