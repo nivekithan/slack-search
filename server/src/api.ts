@@ -47,13 +47,10 @@ const topicsQuerySchema = z.object({
       }
     })
     .optional(),
+  mode: z.literal("reverse").optional(),
 });
 /**
  * Gets paginated topics for a specific channel.
- *
- * TODO:
- *
- * - Add pagination support for this endpoint
  */
 api.get(
   "/:teamId/:channelId/topics",
@@ -73,18 +70,19 @@ api.get(
 
     const query = parsedQuery.data;
 
+    const isReverseMode = query.mode === "reverse";
+    const orderOfCreatedAt = isReverseMode ? "asc" : "desc";
+
     const cursorKey = query.lastTopic;
     const isCursorPresent = cursorKey !== undefined;
+    const cursor = isCursorPresent ? { cursorKey: cursorKey } : undefined;
+
     /**
      * When we pass the cursor, the query response will also contain the cursor row.
-     *
      * We need to skip the cursor row, so we add 1 to the skip value.
-     *
      * If the cursor is not present, we don't need to skip any rows.
      */
     const skip = isCursorPresent ? 1 : 0;
-
-    const cursor = isCursorPresent ? { cursorKey: cursorKey } : undefined;
 
     /**
      * TODO:
@@ -99,7 +97,7 @@ api.get(
         topicMessageTs: { equals: null },
       },
       orderBy: {
-        createdAt: "desc",
+        createdAt: orderOfCreatedAt,
       },
       cursor,
       take,
