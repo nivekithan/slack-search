@@ -2,7 +2,24 @@ import { Channel, PrismaClient } from "@prisma/client";
 import { nanoid } from "nanoid";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { faker } from "@faker-js/faker";
-import { convertCreatedAtAndUpdateAtDateToString, teamIdIs } from "./util";
+import {
+  convertCreatedAtAndUpdateAtDateToString,
+  sortCreatedAtDesc,
+  teamIdIs,
+} from "./util";
+import {
+  CHANNELS,
+  CHANNEL_ID_CHAT,
+  CHANNEL_ID_GENERAL,
+  CRICKET_CHAT_REPLIES,
+  CRICKET_TOPICS,
+  deleteData,
+  seedData,
+  TEAM_ID_CRICKET,
+  TEAM_ID_FOOTBALL,
+  TOPIC_TS_NO_REPLIES,
+  TOPIC_TS_REPLIES,
+} from "./data";
 
 const SERVER_URL = "http://localhost:8080";
 const BASE_API_URL = `${SERVER_URL}/api/v1`;
@@ -15,79 +32,9 @@ beforeAll(async () => {
 });
 
 describe.concurrent("Public facing api endpoints", () => {
-  const TEAM_ID_CRICKET = nanoid(8);
-  const TEAM_ID_FOOTBALL = nanoid(8);
-
-  const channels = ((): Channel[] => {
-    const currentTime = new Date().getTime();
-    const TEN_SECOND = 10 * 1000;
-
-    return [
-      {
-        channelId: nanoid(8),
-        channelName: faker.name.fullName(),
-        id: nanoid(),
-        teamId: TEAM_ID_CRICKET,
-
-        createdAt: new Date(currentTime),
-        updatedAt: new Date(currentTime),
-      },
-      {
-        channelId: nanoid(8),
-        channelName: faker.name.fullName(),
-        id: nanoid(),
-        teamId: TEAM_ID_CRICKET,
-
-        createdAt: new Date(currentTime + TEN_SECOND),
-        updatedAt: new Date(currentTime + TEN_SECOND),
-      },
-      {
-        channelId: nanoid(8),
-        channelName: faker.name.fullName(),
-        id: nanoid(),
-        teamId: TEAM_ID_CRICKET,
-
-        createdAt: new Date(currentTime + TEN_SECOND * 2),
-        updatedAt: new Date(currentTime + TEN_SECOND * 2),
-      },
-      {
-        channelId: nanoid(8),
-        channelName: faker.name.fullName(),
-        id: nanoid(),
-        teamId: TEAM_ID_FOOTBALL,
-
-        createdAt: new Date(currentTime),
-        updatedAt: new Date(currentTime),
-      },
-      {
-        channelId: nanoid(8),
-        channelName: faker.name.fullName(),
-        id: nanoid(),
-        teamId: TEAM_ID_FOOTBALL,
-
-        createdAt: new Date(currentTime + TEN_SECOND),
-        updatedAt: new Date(currentTime + TEN_SECOND),
-      },
-      {
-        channelId: nanoid(8),
-        channelName: faker.name.fullName(),
-        id: nanoid(),
-        teamId: TEAM_ID_FOOTBALL,
-
-        createdAt: new Date(currentTime + TEN_SECOND * 2),
-        updatedAt: new Date(currentTime + TEN_SECOND * 2),
-      },
-    ];
-  })();
-
   beforeAll(async () => {
-    const seedDatabase = async () => {
-      const prisma = new PrismaClient();
-
-      return prisma.channel.createMany({ data: channels });
-    };
-
-    await seedDatabase();
+    await deleteData();
+    await seedData();
   });
 
   it("GET /healthcheck", async () => {
@@ -101,7 +48,7 @@ describe.concurrent("Public facing api endpoints", () => {
     expect(message).toBe("OK");
   });
 
-  it("GET /:teamId/channels ; teamId=CIRCKET", async () => {
+  it("GET /:teamId/channels; teamId=CIRCKET", async () => {
     const response = await fetch(`${BASE_API_URL}/${TEAM_ID_CRICKET}/channels`);
 
     const statusCode = response.status;
@@ -110,13 +57,13 @@ describe.concurrent("Public facing api endpoints", () => {
     const responseObj = await response.json();
 
     expect(responseObj).toEqual(
-      channels
-        .filter(teamIdIs(TEAM_ID_CRICKET))
-        .map(convertCreatedAtAndUpdateAtDateToString)
+      CHANNELS[TEAM_ID_CRICKET].filter(teamIdIs(TEAM_ID_CRICKET)).map(
+        convertCreatedAtAndUpdateAtDateToString
+      )
     );
   });
 
-  it("GET /:teamId/channels ; teamId=FOOTBALL", async () => {
+  it("GET /:teamId/channels; teamId=FOOTBALL", async () => {
     const response = await fetch(
       `${BASE_API_URL}/${TEAM_ID_FOOTBALL}/channels`
     );
@@ -127,14 +74,171 @@ describe.concurrent("Public facing api endpoints", () => {
     const responseObj = await response.json();
 
     expect(responseObj).toEqual(
-      channels
-        .filter(teamIdIs(TEAM_ID_FOOTBALL))
+      CHANNELS[TEAM_ID_FOOTBALL].filter(teamIdIs(TEAM_ID_FOOTBALL)).map(
+        convertCreatedAtAndUpdateAtDateToString
+      )
+    );
+  });
+
+  it("GET /:teamId/channels; teamId=INVALID", async () => {
+    const response = await fetch(`${BASE_API_URL}/INVALID/channels`);
+
+    const statusCode = response.status;
+    expect(statusCode).toBe(404);
+  });
+
+  it("GET /:teamId/:channelId/topics; teamId=CIRCKET, channelId=GENERAL", async () => {
+    const response = await fetch(
+      `${BASE_API_URL}/${TEAM_ID_CRICKET}/${CHANNEL_ID_GENERAL}/topics`
+    );
+
+    const statusCode = response.status;
+    expect(statusCode).toBe(200);
+
+    const responseObj = await response.json();
+
+    expect(responseObj).toEqual(
+      [...CRICKET_TOPICS[CHANNEL_ID_GENERAL]]
+        .sort(sortCreatedAtDesc)
         .map(convertCreatedAtAndUpdateAtDateToString)
     );
   });
 
+  it("GET /:teamId/:channelId/topics; teamId=CIRCKET, channelId=CHAT", async () => {
+    const response = await fetch(
+      `${BASE_API_URL}/${TEAM_ID_CRICKET}/${CHANNEL_ID_CHAT}/topics`
+    );
+
+    const statusCode = response.status;
+    expect(statusCode).toBe(200);
+
+    const responseObj = await response.json();
+
+    expect(responseObj).toEqual(
+      [...CRICKET_TOPICS[CHANNEL_ID_CHAT]]
+        .sort(sortCreatedAtDesc)
+        .map(convertCreatedAtAndUpdateAtDateToString)
+    );
+  });
+
+  it("GET /:teamId/:channelId/topics; teamId=CIRCKET, channelId=INVALID", async () => {
+    const response = await fetch(
+      `${BASE_API_URL}/${TEAM_ID_CRICKET}/INVALID/topics`
+    );
+
+    const statusCode = response.status;
+    expect(statusCode).toBe(404);
+  });
+
+  it("GET /:teamId/:channelId/topics; teamId=INVALID, channelId=GENERAL", async () => {
+    const response = await fetch(
+      `${BASE_API_URL}/INVALID/${CHANNEL_ID_GENERAL}/topics`
+    );
+
+    const statusCode = response.status;
+    expect(statusCode).toBe(404);
+  });
+
+  it("GET /:teamId/:channelId/:messageTs/replies; teamId=CIRCKET, channelId=CHAT, messageTs=TOPIC_TS_REPLIES ", async () => {
+    const response = await fetch(
+      `${BASE_API_URL}/${TEAM_ID_CRICKET}/${CHANNEL_ID_CHAT}/${TOPIC_TS_REPLIES}/replies`
+    );
+
+    const statusCode = response.status;
+    expect(statusCode).toBe(200);
+
+    const responseObj = await response.json();
+
+    expect(responseObj).toEqual(
+      [...CRICKET_CHAT_REPLIES]
+        .sort(sortCreatedAtDesc)
+        .map(convertCreatedAtAndUpdateAtDateToString)
+    );
+  });
+
+  it("GET /:teamId/:channelId/:messageTs/replies; teamId=CIRCKET, channelId=CHAT, messageTs=TOPIC_TS_NO_REPLIES ", async () => {
+    const response = await fetch(
+      `${BASE_API_URL}/${TEAM_ID_CRICKET}/${CHANNEL_ID_CHAT}/${TOPIC_TS_NO_REPLIES}/replies`
+    );
+
+    const statusCode = response.status;
+    expect(statusCode).toBe(404);
+  });
+
+  it("GET /:teamId/:channelId/:messageTs/replies; teamId=CIRCKET, channelId=CHAT, messageTs=INVALID ", async () => {
+    const response = await fetch(
+      `${BASE_API_URL}/${TEAM_ID_CRICKET}/${CHANNEL_ID_CHAT}/INVALID/replies`
+    );
+
+    const statusCode = response.status;
+    expect(statusCode).toBe(404);
+  });
+
+  it("GET /:teamId/:channelId/:messageTs/replies; teamId=CIRCKET, channelId=INVALID, messageTs=TOPIC_TS_REPLIES ", async () => {
+    const response = await fetch(
+      `${BASE_API_URL}/${TEAM_ID_CRICKET}/INVALID/${TOPIC_TS_REPLIES}/replies`
+    );
+
+    const statusCode = response.status;
+    expect(statusCode).toBe(404);
+  });
+
+  it("GET /:teamId/:channelId/:messageTs/replies; teamId=INVALID, channelId=CHAT, messageTs=TOPIC_TS_REPLIES ", async () => {
+    const response = await fetch(
+      `${BASE_API_URL}/INVALID/${CHANNEL_ID_CHAT}/${TOPIC_TS_REPLIES}/replies`
+    );
+
+    const statusCode = response.status;
+    expect(statusCode).toBe(404);
+  });
+
+  it("GET /:teamId/:channelId/:messageTs; teamID=CRICKET, channelId=CHAT, messageTs=TOPIC_TEST_REPLIES", async () => {
+    const response = await fetch(
+      `${BASE_API_URL}/${TEAM_ID_CRICKET}/${CHANNEL_ID_CHAT}/${TOPIC_TS_REPLIES}`
+    );
+
+    const statusCode = response.status;
+    expect(statusCode).toBe(200);
+
+    const responseObj = await response.json();
+
+    expect(responseObj).toEqual(
+      convertCreatedAtAndUpdateAtDateToString(
+        CRICKET_TOPICS[CHANNEL_ID_CHAT].find(
+          (topic) => topic.messageTs === TOPIC_TS_REPLIES
+        )!
+      )
+    );
+  });
+
+  it("GET /:teamId/:channelId/:messageTs; teamId=CRICKET, channelId=CHAT, messageTs=INVALID", async () => {
+    const response = await fetch(
+      `${BASE_API_URL}/${TEAM_ID_CRICKET}/${CHANNEL_ID_CHAT}/INVALID`
+    );
+
+    const statusCode = response.status;
+    expect(statusCode).toBe(404);
+  });
+
+  it("GET /:teamId/:channelId/:messageTs; teamId=CRICKET, channelId=INVALID, messageTs=TOPIC_TEST_REPLIES", async () => {
+    const response = await fetch(
+      `${BASE_API_URL}/${TEAM_ID_CRICKET}/INVALID/${TOPIC_TS_REPLIES}`
+    );
+
+    const statusCode = response.status;
+    expect(statusCode).toBe(404);
+  });
+
+  it("GET /:teamId/:channelId/:messageTs; teamId=INVALID, channelId=CHAT, messageTs=TOPIC_TEST_REPLIES", async () => {
+    const response = await fetch(
+      `${BASE_API_URL}/INVALID/${CHANNEL_ID_CHAT}/${TOPIC_TS_REPLIES}`
+    );
+
+    const statusCode = response.status;
+    expect(statusCode).toBe(404);
+  });
+
   afterAll(async () => {
-    const prisma = new PrismaClient();
-    await prisma.channel.deleteMany();
+    await deleteData();
   });
 });

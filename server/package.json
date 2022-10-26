@@ -10,7 +10,7 @@
     "test": "run-p test:server test:vitest",
     "test:server": "dotenv -e .env.test -- node ./dist/index",
     "test:vitest": "dotenv -e .env.test -- vitest run",
-    "test:studio" : "dotenv -e .env.test -- npx prisma studio",
+    "test:studio": "dotenv -e .env.test -- npx prisma studio",
     "test:db_reset": "dotenv -e .env.test npx prisma db push --force-reset"
   },
   "keywords": [],

@@ -13,3 +13,10 @@ export const convertCreatedAtAndUpdateAtDateToString = <
 export const teamIdIs = <Arg extends { teamId: string }>(teamId: string) => {
   return (arg: Arg) => arg.teamId === teamId;
 };
+
+export const sortCreatedAtDesc = <Arg extends { createdAt: Date }>(
+  a: Arg,
+  b: Arg
+) => {
+  return b.createdAt.getTime() - a.createdAt.getTime();
+};

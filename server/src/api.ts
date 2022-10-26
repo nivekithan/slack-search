@@ -78,12 +78,7 @@ api.get(
      * If the cursor is not present, we don't need to skip any rows.
      */
     const skip = isCursorPresent ? 1 : 0;
-
-    /**
-     * TODO:
-     * Update take with reasonable value
-     */
-    const take = query.take ?? 1;
+    const take = query.take ?? 100;
 
     const allTopics = await prisma.message.findMany({
       where: {
@@ -114,11 +109,9 @@ api.get(
     const channelId = req.params.channelId as string;
     const messageTs = req.params.messageTs as string;
 
-    const message = await Promise.all([
-      prisma.message.findUnique({
-        where: { channelId_messageTs_teamId: { channelId, messageTs, teamId } },
-      }),
-    ]);
+    const message = await prisma.message.findUnique({
+      where: { channelId_messageTs_teamId: { channelId, messageTs, teamId } },
+    });
 
     if (!message) {
       return res.status(404).send(`No message found for team ${teamId}`);
