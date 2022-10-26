@@ -2,4 +2,4 @@ GET http://localhost:8080/api/v1/T040WFQ9QAZ/channels
 
 ### 
 
-GET http://localhost:8080/api/v1/T040WFQ9QAZ/C040JTE3VP1/topics?lastTopic=1&mode=reverse
+GET http://localhost:8080/api/v1/T040WFQ9QAZ/C040JTE3VP1/topics

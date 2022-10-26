@@ -8,10 +8,6 @@ export const api = Router();
 
 /**
  * Gets all known channels for a team
- *
- * TODO:
- *
- * - Add pagination support for channel.findMany method
  */
 api.get(
   "/:teamId/channels",
@@ -144,6 +140,9 @@ api.get(
         channelId: channelId,
         teamId: teamId,
         topicMessageTs: messageTs,
+      },
+      orderBy: {
+        createdAt: "desc",
       },
     });
 
