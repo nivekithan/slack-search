@@ -24,6 +24,7 @@ model Message {
   replies   Message[] @relation("Thread")
   slackUser SlackUser @relation(fields: [userId, teamId], references: [userId, teamId])
   message   String
+  cursorKey Int       @unique @default(autoincrement())
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -36,7 +37,7 @@ model Channel {
   teamId    String
   channelId String
 
-  Message Message[]
+  Message     Message[]
   channelName String
 
   createdAt DateTime @default(now())

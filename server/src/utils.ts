@@ -1,3 +1,5 @@
+import { RefinementCtx, z } from "zod";
+
 export type ENV_VARIABLES = "SLACK_SIGNING_SECRET" | "SLACK_BOT_TOKEN";
 
 export const getEnvVariable = (variable: ENV_VARIABLES): string => {
@@ -8,4 +10,29 @@ export const getEnvVariable = (variable: ENV_VARIABLES): string => {
   }
 
   return envVariableValue;
+};
+
+/**
+ * Zod transform function to validate that a string is a number and transform
+ * to a number.
+ *
+ * If the string is not a number, it will add an issue to the context.
+ *
+ */
+export const transformZodStringToNumber = (
+  output: string,
+  ctx: RefinementCtx
+) => {
+  const parsedValue = parseInt(output, 10);
+
+  if (Number.isNaN(parsedValue)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Not a number",
+    });
+
+    return z.NEVER;
+  }
+
+  return parsedValue;
 };

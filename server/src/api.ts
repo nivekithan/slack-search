@@ -1,6 +1,8 @@
 import { Router } from "express";
+import { z } from "zod";
 import { expressAsyncHanlder } from "./expressAsyncHandler";
 import { prisma } from "./prisma";
+import { transformZodStringToNumber } from "./utils";
 
 export const api = Router();
 
@@ -28,8 +30,26 @@ api.get(
   })
 );
 
+const topicsQuerySchema = z.object({
+  lastTopic: z.string().transform(transformZodStringToNumber).optional(),
+  take: z
+    .string()
+    .transform(transformZodStringToNumber)
+    .superRefine((takeValue, ctx) => {
+      if (takeValue > 100) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.too_big,
+          maximum: 100,
+          inclusive: true,
+          type: "number",
+          message: "Take value cannot be greater than 100",
+        });
+      }
+    })
+    .optional(),
+});
 /**
- * Gets all topics for a channel.
+ * Gets paginated topics for a specific channel.
  *
  * TODO:
  *
@@ -41,8 +61,49 @@ api.get(
     const teamId = req.params.teamId as string;
     const channelId = req.params.channelId as string;
 
+    const parsedQuery = topicsQuerySchema.safeParse(req.query);
+
+    if (!parsedQuery.success) {
+      /**
+       * Unknown/unsupported query params are passed to this endpoint, so we need to
+       * return a 400 error.
+       **/
+      return res.send(400).send(parsedQuery.error);
+    }
+
+    const query = parsedQuery.data;
+
+    const cursorKey = query.lastTopic;
+    const isCursorPresent = cursorKey !== undefined;
+    /**
+     * When we pass the cursor, the query response will also contain the cursor row.
+     *
+     * We need to skip the cursor row, so we add 1 to the skip value.
+     *
+     * If the cursor is not present, we don't need to skip any rows.
+     */
+    const skip = isCursorPresent ? 1 : 0;
+
+    const cursor = isCursorPresent ? { cursorKey: cursorKey } : undefined;
+
+    /**
+     * TODO:
+     * Update take with reasonable value
+     */
+    const take = query.take ?? 1;
+
     const allTopics = await prisma.message.findMany({
-      where: { channelId: channelId, teamId: teamId },
+      where: {
+        channelId: channelId,
+        teamId: teamId,
+        topicMessageTs: { equals: null },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      cursor,
+      take,
+      skip,
     });
 
     if (allTopics.length === 0) {
