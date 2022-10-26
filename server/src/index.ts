@@ -1,6 +1,5 @@
 import express, { RequestHandler } from "express";
 import { text as parseTextBody } from "body-parser";
-import { expressAsyncHanlder } from "./expressAsyncHandler";
 import {
   passUrlVerificationChallenge,
   sendAcknowledgementResponse,
@@ -8,6 +7,7 @@ import {
 } from "./slack/slackMiddleware";
 import { slackEventHandler } from "./slack/eventHandler";
 import { api } from "./api";
+import { expressAsyncHanlder } from "./utils";
 
 const app = express();
 

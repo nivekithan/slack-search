@@ -1,4 +1,5 @@
 import { RefinementCtx, z } from "zod";
+import { RequestHandler } from "express";
 
 export type ENV_VARIABLES = "SLACK_SIGNING_SECRET" | "SLACK_BOT_TOKEN";
 
@@ -35,4 +36,14 @@ export const transformZodStringToNumber = (
   }
 
   return parsedValue;
+};
+
+export const expressAsyncHanlder = (
+  callback: RequestHandler
+): RequestHandler => {
+  const newRequestHandler: RequestHandler = (req, res, next) => {
+    return Promise.resolve(callback(req, res, next)).catch(next);
+  };
+
+  return newRequestHandler;
 };

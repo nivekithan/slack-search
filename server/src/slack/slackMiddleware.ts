@@ -1,6 +1,5 @@
-import { expressAsyncHanlder } from "../expressAsyncHandler";
 import { createHmac } from "node:crypto";
-import { getEnvVariable } from "../utils";
+import { getEnvVariable, expressAsyncHanlder } from "../utils";
 
 /**
  * Verifies that request really came from slack.

@@ -1,4 +1,4 @@
-import { expressAsyncHanlder } from "../expressAsyncHandler";
+import { expressAsyncHanlder } from "../utils";
 import { slackEvents } from "./eventSchema";
 import { hanldeMessageSentEvent } from "./handleMessageSentEvent";
 
