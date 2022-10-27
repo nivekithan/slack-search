@@ -11,6 +11,12 @@ import { getEnvVariable, expressAsyncHanlder } from "../utils";
  */
 export const verifyRequestIsFromSlack = expressAsyncHanlder(
   async (req, res, next) => {
+    if (getEnvVariable("NODE_ENV") === "test") {
+      req.body = JSON.parse(req.body);
+      next();
+      return;
+    }
+
     const requestTimeStamp = req.headers["x-slack-request-timestamp"];
 
     if (typeof requestTimeStamp !== "string") {

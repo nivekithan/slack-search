@@ -3,7 +3,7 @@
     "strict": true,
     "allowJs": true,
     "esModuleInterop": true,
-    "target": "es2018",
+    "target": "ES2018",
     "isolatedModules": true,
     "module": "commonjs",
     "moduleResolution": "node",

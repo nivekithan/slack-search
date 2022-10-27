@@ -7,12 +7,14 @@
     "dev": "run-p dev:*",
     "dev:watch_server": "node ./scripts/esbuild watch",
     "dev:server": "dotenv -e .env.development -- nodemon ./dist/index",
-    "test": "pnpm run test:build_server && run-p test:server test:vitest",
-    "test:server": "dotenv -e .env.test -- node ./dist/index",
+
+    "test": "run-p test:server test:vitest",
+    "test:server": "pnpm run test:build_server && pnpm run test:start_server",
+    "test:start_server": "dotenv -e .env.test -- node ./dist/index",
+    "test:build_server": "node ./scripts/esbuild build",
     "test:vitest": "dotenv -e .env.test -- vitest run",
     "test:studio": "dotenv -e .env.test -- npx prisma studio",
-    "test:db_reset": "dotenv -e .env.test -- npx prisma db push --force-reset",
-    "test:build_server": "node ./scripts/esbuild build"
+    "test:db_reset": "dotenv -e .env.test -- npx prisma db push --force-reset"
   },
   "keywords": [],
   "author": "",
@@ -24,6 +26,7 @@
     "@types/node": "^18.11.4",
     "dotenv-cli": "^6.0.0",
     "esbuild": "^0.15.12",
+    "msw": "^0.47.4",
     "nodemon": "^2.0.20",
     "npm-run-all": "^4.1.5",
     "prisma": "^4.5.0",

@@ -1,7 +1,10 @@
 import { RefinementCtx, z } from "zod";
 import { RequestHandler } from "express";
 
-export type ENV_VARIABLES = "SLACK_SIGNING_SECRET" | "SLACK_BOT_TOKEN";
+export type ENV_VARIABLES =
+  | "SLACK_SIGNING_SECRET"
+  | "SLACK_BOT_TOKEN"
+  | "NODE_ENV";
 
 export const getEnvVariable = (variable: ENV_VARIABLES): string => {
   const envVariableValue = process.env[variable];

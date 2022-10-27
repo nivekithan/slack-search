@@ -7,7 +7,7 @@ import {
 } from "./slack/slackMiddleware";
 import { slackEventHandler } from "./slack/eventHandler";
 import { api } from "./api";
-import { expressAsyncHanlder } from "./utils";
+import { expressAsyncHanlder, getEnvVariable } from "./utils";
 
 const app = express();
 
@@ -49,6 +49,22 @@ app.post(
   sendAcknowledgementResponse,
   slackEventHandler
 );
+
+if (getEnvVariable("NODE_ENV") === "test") {
+  const startMockServer = async () => {
+    const { server } = await import("../test/mock/slack");
+
+    console.log("Starting mock server");
+    server.listen({
+      onUnhandledRequest: (req) => {
+        console.log(req.url.toString());
+        console.log(req.method);
+      },
+    });
+  };
+
+  startMockServer();
+}
 
 app.listen(8080, () => {
   console.log("Server started on port 8080");

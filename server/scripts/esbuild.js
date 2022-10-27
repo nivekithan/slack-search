@@ -19,7 +19,7 @@ const main = async (command) => {
     absWorkingDir: path.resolve(__dirname, ".."),
     entryPoints: ["./src/index.ts"],
     bundle: true,
-    external: ["./node_modules/*", "zod", "nanoid"],
+    external: ["./node_modules/*", "zod", "nanoid", "msw", "@faker-js/faker"],
     platform: "node",
     format: "cjs",
     target: "es2018",

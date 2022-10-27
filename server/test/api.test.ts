@@ -16,10 +16,20 @@ import {
   TEAM_ID_FOOTBALL,
   TOPIC_TS_NO_REPLIES,
   TOPIC_TS_REPLIES,
-} from "./data";
+} from "./publicApiData";
+import { faker } from "@faker-js/faker";
+import { PrismaClient } from "@prisma/client";
+import {
+  conversationInfoRes,
+  SLACK_API_CHANNEL_ID_CHAT,
+  SLACK_API_TEAM_ID_CRICKET,
+  SLACK_API_TOPIC_TS,
+  SLACK_API_USER,
+} from "./slackApiData";
 
 const SERVER_URL = "http://localhost:8080";
 const BASE_API_URL = `${SERVER_URL}/api/v1`;
+const SLACK_EVENT_URL = `${BASE_API_URL}/slack/events`;
 
 /**
  * Wait for 1000ms before running the tests
@@ -436,4 +446,99 @@ describe.concurrent("Public facing api endpoints", () => {
   });
 });
 
-describe.concurrent("Slack facing endpoints", () => {});
+describe.concurrent("Slack facing endpoints", () => {
+  beforeAll(async () => {
+    await publicApiDeleteData();
+  });
+
+  it("SlackSendMessage event", async () => {
+    const prisma = new PrismaClient();
+
+    const eventBody = {
+      team_id: SLACK_API_TEAM_ID_CRICKET,
+      type: "event_callback",
+      event: {
+        type: "message",
+        channel: SLACK_API_CHANNEL_ID_CHAT,
+        user: SLACK_API_USER,
+        text: faker.hacker.phrase(),
+        ts: SLACK_API_TOPIC_TS,
+      },
+    };
+
+    const response = await fetch(SLACK_EVENT_URL, {
+      method: "POST",
+      body: JSON.stringify(eventBody),
+    });
+
+    const statusCode = response.status;
+
+    expect(statusCode).toBe(200);
+
+    await new Promise((r) => setTimeout(r, 100));
+
+    const [channel, message] = await Promise.all([
+      prisma.channel.findUnique({
+        where: {
+          teamId_channelId: {
+            channelId: SLACK_API_CHANNEL_ID_CHAT,
+            teamId: SLACK_API_TEAM_ID_CRICKET,
+          },
+        },
+      }),
+
+      prisma.message.findUnique({
+        where: {
+          channelId_messageTs_teamId: {
+            channelId: SLACK_API_CHANNEL_ID_CHAT,
+            messageTs: SLACK_API_TOPIC_TS,
+            teamId: SLACK_API_TEAM_ID_CRICKET,
+          },
+        },
+      }),
+    ]);
+
+    expect(channel).not.toBeNull();
+
+    expect({
+      ...channel,
+      id: "ignore",
+      createdAt: "ignore",
+      updatedAt: "ignore",
+    }).toEqual({
+      id: "ignore",
+      createdAt: "ignore",
+      updatedAt: "ignore",
+      teamId: SLACK_API_TEAM_ID_CRICKET,
+      channelId: SLACK_API_CHANNEL_ID_CHAT,
+      channelName: conversationInfoRes[SLACK_API_CHANNEL_ID_CHAT].channel.name,
+    });
+
+    expect(message).not.toBeNull();
+
+    expect({
+      ...message,
+      id: "ignore",
+      cursorKey: "ignore",
+      createdAt: "ignore",
+      updatedAt: "ignore",
+    }).toEqual({
+      id: "ignore",
+      cursorKey: "ignore",
+      createdAt: "ignore",
+      updatedAt: "ignore",
+      teamId: SLACK_API_TEAM_ID_CRICKET,
+      channelId: SLACK_API_CHANNEL_ID_CHAT,
+      messageTs: SLACK_API_TOPIC_TS,
+      userId: SLACK_API_USER,
+      topicMessageTs: null,
+      repliesCount: 0,
+
+      message: eventBody.event.text,
+    });
+  });
+
+  afterAll(async () => {
+    await publicApiDeleteData();
+  });
+});
