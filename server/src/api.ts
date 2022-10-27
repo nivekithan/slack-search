@@ -26,7 +26,7 @@ api.get(
 );
 
 const topicsQuerySchema = z.object({
-  lastTopic: z.string().transform(transformZodStringToNumber).optional(),
+  cursor: z.string().transform(transformZodStringToNumber).optional(),
   take: z
     .string()
     .transform(transformZodStringToNumber)
@@ -60,15 +60,14 @@ api.get(
        * Unknown/unsupported query params are passed to this endpoint, so we need to
        * return a 400 error.
        **/
-      return res.send(400).send(parsedQuery.error);
+      return res.status(400).send(parsedQuery.error);
     }
 
     const query = parsedQuery.data;
 
     const isReverseMode = query.mode === "reverse";
-    const orderOfCreatedAt = isReverseMode ? "asc" : "desc";
 
-    const cursorKey = query.lastTopic;
+    const cursorKey = query.cursor;
     const isCursorPresent = cursorKey !== undefined;
     const cursor = isCursorPresent ? { cursorKey: cursorKey } : undefined;
 
@@ -78,7 +77,7 @@ api.get(
      * If the cursor is not present, we don't need to skip any rows.
      */
     const skip = isCursorPresent ? 1 : 0;
-    const take = query.take ?? 100;
+    const take = (query.take ?? 100) * (isReverseMode ? -1 : 1);
 
     const allTopics = await prisma.message.findMany({
       where: {
@@ -87,7 +86,7 @@ api.get(
         topicMessageTs: { equals: null },
       },
       orderBy: {
-        createdAt: orderOfCreatedAt,
+        cursorKey: "desc",
       },
       cursor,
       take,

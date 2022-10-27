@@ -23,6 +23,15 @@ const autoincrement = () => {
   return increment;
 };
 
+const getIncreaseTime = () => {
+  let currentTime = new Date().getTime();
+
+  return () => {
+    currentTime += TEN_SECOND;
+    return new Date(currentTime);
+  };
+};
+
 const getChannelData = (teamId: string) => {
   return [
     {
@@ -62,19 +71,20 @@ const SLACK_USER: SlackUser[] = [
 ];
 
 export const getCricketTopicData = (channelId: string) => {
+  const increaseTime = getIncreaseTime();
   return [
     {
       teamId: TEAM_ID_CRICKET,
       channelId,
-      id: nanoid(8),
+      id: `LOW-${nanoid(8)}`,
       cursorKey: autoincrement(),
       messageTs: TOPIC_TS_NO_REPLIES,
       userId: USER_TEST,
       topicMessageTs: null,
       message: faker.hacker.phrase(),
       repliesCount: 0,
-      createdAt: new Date(now),
-      updatedAt: new Date(now),
+      createdAt: increaseTime(),
+      updatedAt: increaseTime(),
     },
     {
       teamId: TEAM_ID_CRICKET,
@@ -86,8 +96,60 @@ export const getCricketTopicData = (channelId: string) => {
       topicMessageTs: null,
       message: faker.hacker.phrase(),
       repliesCount: 0,
-      createdAt: new Date(now + TEN_SECOND),
-      updatedAt: new Date(now + TEN_SECOND),
+      createdAt: increaseTime(),
+      updatedAt: increaseTime(),
+    },
+    {
+      teamId: TEAM_ID_CRICKET,
+      channelId,
+      id: nanoid(8),
+      cursorKey: autoincrement(),
+      messageTs: nanoid(8),
+      userId: USER_TEST,
+      topicMessageTs: null,
+      message: faker.hacker.phrase(),
+      repliesCount: 0,
+      createdAt: increaseTime(),
+      updatedAt: increaseTime(),
+    },
+    {
+      teamId: TEAM_ID_CRICKET,
+      channelId,
+      id: nanoid(8),
+      cursorKey: autoincrement(),
+      messageTs: nanoid(8),
+      userId: USER_TEST,
+      topicMessageTs: null,
+      message: faker.hacker.phrase(),
+      repliesCount: 0,
+      createdAt: increaseTime(),
+      updatedAt: increaseTime(),
+    },
+    {
+      teamId: TEAM_ID_CRICKET,
+      channelId,
+      id: nanoid(8),
+      cursorKey: autoincrement(),
+      messageTs: nanoid(8),
+      userId: USER_TEST,
+      topicMessageTs: null,
+      message: faker.hacker.phrase(),
+      repliesCount: 0,
+      createdAt: increaseTime(),
+      updatedAt: increaseTime(),
+    },
+    {
+      teamId: TEAM_ID_CRICKET,
+      channelId,
+      id: nanoid(8),
+      cursorKey: autoincrement(),
+      messageTs: nanoid(8),
+      userId: USER_TEST,
+      topicMessageTs: null,
+      message: faker.hacker.phrase(),
+      repliesCount: 0,
+      createdAt: increaseTime(),
+      updatedAt: increaseTime(),
     },
   ];
 };
@@ -178,7 +240,7 @@ export const CRICKET_CHAT_REPLIES: Message[] = [
   },
 ];
 
-export const seedData = async () => {
+export const publicApiSeedData = async () => {
   const prisma = new PrismaClient();
 
   await prisma.channel.createMany({
@@ -197,7 +259,7 @@ export const seedData = async () => {
   await prisma.message.createMany({ data: [...CRICKET_CHAT_REPLIES] });
 };
 
-export const deleteData = async () => {
+export const publicApiDeleteData = async () => {
   const prisma = new PrismaClient();
 
   await prisma.message.deleteMany({

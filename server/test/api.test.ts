@@ -1,7 +1,4 @@
-import { Channel, PrismaClient } from "@prisma/client";
-import { nanoid } from "nanoid";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { faker } from "@faker-js/faker";
 import {
   convertCreatedAtAndUpdateAtDateToString,
   sortCreatedAtDesc,
@@ -13,8 +10,8 @@ import {
   CHANNEL_ID_GENERAL,
   CRICKET_CHAT_REPLIES,
   CRICKET_TOPICS,
-  deleteData,
-  seedData,
+  publicApiDeleteData,
+  publicApiSeedData,
   TEAM_ID_CRICKET,
   TEAM_ID_FOOTBALL,
   TOPIC_TS_NO_REPLIES,
@@ -33,8 +30,8 @@ beforeAll(async () => {
 
 describe.concurrent("Public facing api endpoints", () => {
   beforeAll(async () => {
-    await deleteData();
-    await seedData();
+    await publicApiDeleteData();
+    await publicApiSeedData();
   });
 
   it("GET /healthcheck", async () => {
@@ -102,6 +99,202 @@ describe.concurrent("Public facing api endpoints", () => {
         .sort(sortCreatedAtDesc)
         .map(convertCreatedAtAndUpdateAtDateToString)
     );
+  });
+
+  describe("GET /:teamId/:channelId/topics; teamId=CRICKET, channelId=GENERALl; Pagination", () => {
+    let firstResponseLastTopicKey: null | number = null;
+    let firstResponseFirstTopicKey: null | number = null;
+    it("No cursor, mode passed; take = 3", async () => {
+      const url = new URL(
+        `${BASE_API_URL}/${TEAM_ID_CRICKET}/${CHANNEL_ID_GENERAL}/topics`
+      );
+
+      const queryParams = url.searchParams;
+
+      queryParams.set("take", "3");
+
+      const response = await fetch(url.toString());
+
+      const statusCode = response.status;
+      expect(statusCode).toBe(200);
+
+      const responseObj = await response.json();
+
+      expect(responseObj).toEqual(
+        CRICKET_TOPICS[CHANNEL_ID_GENERAL].sort(sortCreatedAtDesc)
+          .slice(0, 3)
+          .map(convertCreatedAtAndUpdateAtDateToString)
+      );
+
+      firstResponseLastTopicKey = responseObj.at(-1).cursorKey as number;
+      firstResponseFirstTopicKey = responseObj.at(0).cursorKey as number;
+    });
+
+    let secondResponseFirstTopicKey: number | null = null;
+    let secondResponseLastTopicKey: number | null = null;
+    it("No mode passed; take=3, cursor is firstResponseLastTopic cursorKey", async () => {
+      const url = new URL(
+        `${BASE_API_URL}/${TEAM_ID_CRICKET}/${CHANNEL_ID_GENERAL}/topics`
+      );
+
+      const queryParams = url.searchParams;
+
+      expect(firstResponseLastTopicKey).not.toBeNull();
+      expect(firstResponseLastTopicKey).not.toBeUndefined();
+
+      queryParams.set("cursor", `${firstResponseLastTopicKey}`);
+      queryParams.set("take", "3");
+
+      const response = await fetch(url.toString());
+      const responseObj = await response.json();
+
+      const statusCode = response.status;
+      expect(statusCode).toBe(200);
+
+      expect(responseObj).toEqual(
+        CRICKET_TOPICS[CHANNEL_ID_GENERAL].sort(sortCreatedAtDesc)
+          .slice(3, 6)
+          .map(convertCreatedAtAndUpdateAtDateToString)
+      );
+
+      secondResponseFirstTopicKey = responseObj[0].cursorKey;
+      secondResponseLastTopicKey = responseObj.at(-1).cursorKey;
+    });
+
+    it("take=3, mode=reverse, cursor is secondResponseFirstTopic cursorKey", async () => {
+      const url = new URL(
+        `${BASE_API_URL}/${TEAM_ID_CRICKET}/${CHANNEL_ID_GENERAL}/topics`
+      );
+
+      const queryParams = url.searchParams;
+
+      expect(secondResponseFirstTopicKey).not.toBeNull();
+      expect(secondResponseFirstTopicKey).not.toBeUndefined();
+
+      queryParams.set("cursor", `${secondResponseFirstTopicKey}`);
+      queryParams.set("take", "3");
+      queryParams.set("mode", "reverse");
+
+      const response = await fetch(url.toString());
+      const responseObj = await response.json();
+
+      const statusCode = response.status;
+      expect(statusCode).toBe(200);
+
+      expect(responseObj).toEqual(
+        CRICKET_TOPICS[CHANNEL_ID_GENERAL].sort(sortCreatedAtDesc)
+          .slice(0, 3)
+          .map(convertCreatedAtAndUpdateAtDateToString)
+      );
+    });
+
+    describe("404 Requests", async () => {
+      it("No mode passed; take=3, cursor is secondResponseLastTopic cursorKey", async () => {
+        const url = new URL(
+          `${BASE_API_URL}/${TEAM_ID_CRICKET}/${CHANNEL_ID_GENERAL}/topics`
+        );
+
+        const queryParams = url.searchParams;
+
+        expect(secondResponseLastTopicKey).not.toBeNull();
+        expect(secondResponseLastTopicKey).not.toBeUndefined();
+
+        queryParams.set("cursor", `${secondResponseLastTopicKey}`);
+        queryParams.set("take", "3");
+
+        const response = await fetch(url.toString());
+
+        const statusCode = response.status;
+        expect(statusCode).toBe(404);
+      });
+
+      it("take=3, mode=reverse, cursor is firstResponseFirstTopic cursorKey", async () => {
+        const url = new URL(
+          `${BASE_API_URL}/${TEAM_ID_CRICKET}/${CHANNEL_ID_GENERAL}/topics`
+        );
+
+        const queryParams = url.searchParams;
+
+        expect(firstResponseFirstTopicKey).not.toBeNull();
+        expect(firstResponseFirstTopicKey).not.toBeUndefined();
+
+        queryParams.set("cursor", `${firstResponseFirstTopicKey}`);
+        queryParams.set("take", "3");
+        queryParams.set("mode", "reverse");
+
+        const response = await fetch(url.toString());
+
+        const statusCode = response.status;
+        expect(statusCode).toBe(404);
+      });
+    });
+
+    it.concurrent("No cursor; mode=reverse, take=3", async () => {
+      const url = new URL(
+        `${BASE_API_URL}/${TEAM_ID_CRICKET}/${CHANNEL_ID_GENERAL}/topics`
+      );
+
+      const queryParams = url.searchParams;
+
+      queryParams.set("take", "3");
+      queryParams.set("mode", "reverse");
+
+      const response = await fetch(url.toString());
+      const responseObj = await response.json();
+
+      const statusCode = response.status;
+      expect(statusCode).toBe(200);
+
+      expect(responseObj).toEqual(
+        CRICKET_TOPICS[CHANNEL_ID_GENERAL].sort(sortCreatedAtDesc)
+          .slice(3, 6)
+          .map(convertCreatedAtAndUpdateAtDateToString)
+      );
+    });
+
+    describe.concurrent("Bad requests", () => {
+      it("mode=INVALID", async () => {
+        const url = new URL(
+          `${BASE_API_URL}/${TEAM_ID_CRICKET}/${CHANNEL_ID_GENERAL}/topics`
+        );
+
+        const queryParams = url.searchParams;
+
+        queryParams.set("mode", "INVALID");
+
+        const response = await fetch(url.toString());
+        const statusCode = response.status;
+        expect(statusCode).toBe(400);
+      });
+
+      it("take=INVALID", async () => {
+        const url = new URL(
+          `${BASE_API_URL}/${TEAM_ID_CRICKET}/${CHANNEL_ID_GENERAL}/topics`
+        );
+
+        const queryParams = url.searchParams;
+
+        queryParams.set("take", "INVALID");
+
+        const response = await fetch(url.toString());
+        const statusCode = response.status;
+        expect(statusCode).toBe(400);
+      });
+
+      it("cursor=INVALID", async () => {
+        const url = new URL(
+          `${BASE_API_URL}/${TEAM_ID_CRICKET}/${CHANNEL_ID_GENERAL}/topics`
+        );
+
+        const queryParams = url.searchParams;
+
+        queryParams.set("cursor", "INVALID");
+
+        const response = await fetch(url.toString());
+        const statusCode = response.status;
+        expect(statusCode).toBe(400);
+      });
+    });
   });
 
   it("GET /:teamId/:channelId/topics; teamId=CIRCKET, channelId=CHAT", async () => {
@@ -239,6 +432,8 @@ describe.concurrent("Public facing api endpoints", () => {
   });
 
   afterAll(async () => {
-    await deleteData();
+    await publicApiDeleteData();
   });
 });
+
+describe.concurrent("Slack facing endpoints", () => {});

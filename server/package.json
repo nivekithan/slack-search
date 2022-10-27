@@ -5,13 +5,14 @@
   "main": "index.js",
   "scripts": {
     "dev": "run-p dev:*",
-    "dev:ts": "node ./scripts/watch",
+    "dev:watch_server": "node ./scripts/esbuild watch",
     "dev:server": "dotenv -e .env.development -- nodemon ./dist/index",
-    "test": "run-p test:server test:vitest",
+    "test": "pnpm run test:build_server && run-p test:server test:vitest",
     "test:server": "dotenv -e .env.test -- node ./dist/index",
     "test:vitest": "dotenv -e .env.test -- vitest run",
     "test:studio": "dotenv -e .env.test -- npx prisma studio",
-    "test:db_reset": "dotenv -e .env.test npx prisma db push --force-reset"
+    "test:db_reset": "dotenv -e .env.test -- npx prisma db push --force-reset",
+    "test:build_server": "node ./scripts/esbuild build"
   },
   "keywords": [],
   "author": "",
