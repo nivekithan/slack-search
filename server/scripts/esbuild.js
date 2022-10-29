@@ -31,4 +31,4 @@ const main = async (command) => {
   console.log("watching for changes...");
 };
 
-main();
+main(process.argv.slice(2)[0]);

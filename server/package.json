@@ -7,7 +7,6 @@
     "dev": "run-p dev:*",
     "dev:watch_server": "node ./scripts/esbuild watch",
     "dev:server": "dotenv -e .env.development -- nodemon ./dist/index",
-
     "test": "run-p test:server test:vitest",
     "test:server": "pnpm run test:build_server && pnpm run test:start_server",
     "test:start_server": "dotenv -e .env.test -- node ./dist/index",
@@ -34,6 +33,10 @@
     "vitest": "^0.24.3"
   },
   "dependencies": {
+    "@opentelemetry/api": "^1.2.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.33.1",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.33.0",
+    "@opentelemetry/sdk-node": "^0.33.0",
     "@prisma/client": "^4.5.0",
     "@slack/web-api": "^6.7.2",
     "body-parser": "^1.20.1",

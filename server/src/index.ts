@@ -1,3 +1,4 @@
+import "./tracing";
 import express, { RequestHandler } from "express";
 import { text as parseTextBody } from "body-parser";
 import {
@@ -39,7 +40,7 @@ app.use(
 /**
  * API for frontend
  */
-app.use("/api/v1/", api);
+app.use("/api/v1", api);
 
 app.post(
   "/api/v1/slack/events",
