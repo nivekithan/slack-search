@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import { logger } from "./logger";
 import { prisma } from "./prisma";
 import { expressAsyncHanlder, transformZodStringToNumber } from "./utils";
 
@@ -12,15 +13,19 @@ api.get(
   "/:teamId/channels",
   expressAsyncHanlder(async (req, res) => {
     const teamId = req.params.teamId as string;
+    logger.setTeam(teamId);
+    logger(`Getting channels for team ${teamId}`);
 
     const allChannels = await prisma.channel.findMany({
       where: { teamId: teamId },
     });
 
     if (allChannels.length === 0) {
+      logger(`No channels found for team ${teamId}`);
       return res.status(404).send(`No channels found for team ${teamId}`);
     }
 
+    logger(`Found ${allChannels.length} channels for team ${teamId}`);
     return res.json(allChannels);
   })
 );
@@ -53,6 +58,10 @@ api.get(
     const teamId = req.params.teamId as string;
     const channelId = req.params.channelId as string;
 
+    logger.setTeam(teamId);
+    logger.setChannel(channelId);
+    logger(`Getting topics`);
+
     const parsedQuery = topicsQuerySchema.safeParse(req.query);
 
     if (!parsedQuery.success) {
@@ -60,8 +69,11 @@ api.get(
        * Unknown/unsupported query params are passed to this endpoint, so we need to
        * return a 400 error.
        **/
+      logger("Invalid query params", req.query);
       return res.status(400).send(parsedQuery.error);
     }
+
+    logger("Query params are parsed successfully", parsedQuery.data);
 
     const query = parsedQuery.data;
 
