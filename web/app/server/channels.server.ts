@@ -30,5 +30,7 @@ export const getChannels = async (teamId: string) => {
     return validatedChannels;
   }
 
-  return new Error("Unable to get channels");
+  return new Error(
+    `${channelEndpointRes.status} ${channelEndpointRes.statusText}`
+  );
 };

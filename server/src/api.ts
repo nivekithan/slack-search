@@ -63,6 +63,10 @@ const topicsQuerySchema = z.object({
 });
 /**
  * Gets paginated topics for a specific channel.
+ *
+ *
+ * TODO:
+ * - Add Documentation explaining query params for this method
  */
 api.get(
   "/:teamId/:channelId/topics",
@@ -115,13 +119,37 @@ api.get(
       cursor,
       take,
       skip,
+      include: {
+        slackUser: true,
+      },
     });
 
     if (allTopics.length === 0) {
       return res.status(404).send(`No topics found for team ${teamId}`);
     }
-
-    return res.json(allTopics);
+    const whiteLabeledTopics = allTopics.map((topic) => {
+      return {
+        id: topic.id,
+        teamId: topic.teamId,
+        channelId: topic.channelId,
+        userId: topic.userId,
+        messageTs: topic.messageTs,
+        repliesCount: topic.repliesCount,
+        slackUser: {
+          id: topic.slackUser.id,
+          teamId: topic.slackUser.teamId,
+          userId: topic.slackUser.userId,
+          userRealName: topic.slackUser.userRealName,
+          userNickName: topic.slackUser.userNickName,
+          createdAt: topic.slackUser.createdAt,
+          updatedAt: topic.slackUser.updatedAt,
+        },
+        message: topic.message,
+        createdAt: topic.createdAt,
+        updatedAt: topic.updatedAt,
+      };
+    });
+    return res.json(whiteLabeledTopics);
   })
 );
 

@@ -1,0 +1,31 @@
+.topic_container {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  grid-template-rows: auto auto auto;
+  grid-template-areas:
+    "avatar username time"
+    ". message message"
+    ". view_replies view_replies";
+  align-items: center;
+  column-gap: 12px;
+}
+
+.topic_container .__avatar {
+  grid-area: avatar;
+}
+
+.topic_container .__username {
+  grid-area: username;
+}
+
+.topic_container .__time {
+  grid-area: time;
+}
+
+.topic_container .__message {
+  grid-area: message;
+}
+
+.topic_container .__view_replies {
+  grid-area: view_replies;
+}
