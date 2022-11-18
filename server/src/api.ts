@@ -26,7 +26,19 @@ api.get(
     }
 
     logger(`Found ${allChannels.length} channels for team ${teamId}`);
-    return res.json(allChannels);
+
+    const whiteLabeledChannels = allChannels.map((channel) => {
+      return {
+        id: channel.id,
+        teamId: channel.teamId,
+        channelId: channel.channelId,
+        channelName: channel.channelName,
+        createdAt: channel.createdAt,
+        updatedAt: channel.updatedAt,
+      };
+    });
+
+    return res.json(whiteLabeledChannels);
   })
 );
 

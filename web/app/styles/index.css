@@ -1,0 +1,32 @@
+.message_card {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  grid-template-rows: auto auto auto;
+  grid-template-areas:
+    "avatar name time"
+    ". message message"
+    ". view_replies view_relpies";
+  align-items: center;
+  column-gap: 12px;
+}
+
+.message_card .avatar {
+  grid-area: avatar;
+}
+
+.message_card .name {
+  grid-area: name;
+}
+
+.message_card .time {
+  grid-area: time;
+}
+
+.message_card .message {
+  grid-area: message;
+  align-self: start;
+}
+
+.message_card .view_replies {
+  grid-area: view_replies;
+}

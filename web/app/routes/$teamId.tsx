@@ -1,42 +1,47 @@
-import type { LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import type { LoaderArgs } from "@remix-run/node";
+import { Outlet, useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
-import type { Channels} from "~/server/api.server";
-import { getChannelsForTeam } from "~/server/api.server";
+import { getChannels } from "~/server/channels.server";
 
 export const loader = async ({ params }: LoaderArgs) => {
   const teamId = params.teamId;
-  invariant(teamId, "Team ID is required");
+  invariant(
+    teamId,
+    "Could not find teamId from loaderArgs.params. Make sure the filename is $teamId"
+  );
+  const channels = await getChannels(teamId);
 
-  const channels = await getChannelsForTeam(teamId);
-
-  return json({ channels });
-};
-
-const NavigationSideBar = () => {
-  const loaderData = useLoaderData<typeof loader>();
-
-  const channels = loaderData.channels;
-
-  return <RenderChannels channels={channels} />;
-};
-
-type RenderChannelsProps = {
-  channels: Channels;
-};
-const RenderChannels = ({ channels }: RenderChannelsProps) => {
-  if (channels.length === 0) {
-    return <p>No channels</p>;
+  if (channels instanceof Error) {
+    throw new Response("not found", { status: 404 });
   }
 
+  return json({ teamId, channels });
+};
+
+const TeamHomePage = () => {
+  const loaderData = useLoaderData<typeof loader>();
+
   return (
-    <ul>
-      {channels.map((channel) => {
-        return <li key={channel.id}> {channel.channelName}</li>;
-      })}
-    </ul>
+    <div className="pb-14">
+      <Outlet />
+      <nav className="fixed bottom-0 left-0 right-0 bg-blue-500 h-14 grid place-items-center px-3 py-2">
+        <select className="w-full rounded-md ">
+          {loaderData.channels.map((channel) => {
+            return (
+              <option
+                value={channel.channelId}
+                key={channel.id}
+                className="text-base"
+              >
+                {channel.channelName}
+              </option>
+            );
+          })}
+        </select>
+      </nav>
+    </div>
   );
 };
 
-export default NavigationSideBar;
+export default TeamHomePage;

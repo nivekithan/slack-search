@@ -7,6 +7,7 @@
     "dev": "run-p dev:*",
     "dev:watch_server": "node ./scripts/esbuild watch",
     "dev:server": "dotenv -e .env.development -- nodemon ./dist/index",
+    "studio": "dotenv -e .env.development -- prisma studio",
     "test": "run-p test:server test:vitest",
     "test:server": "pnpm run test:build_server && pnpm run test:start_server",
     "test:start_server": "dotenv -e .env.test -- node ./dist/index",
