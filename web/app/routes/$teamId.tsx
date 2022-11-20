@@ -1,15 +1,22 @@
 import { json } from "@remix-run/node";
 import type { LoaderArgs } from "@remix-run/node";
-import { Outlet, useLoaderData } from "@remix-run/react";
+import {
+  Outlet,
+  useLoaderData,
+  useNavigate,
+  useParams,
+} from "@remix-run/react";
 import invariant from "tiny-invariant";
 import { getChannels } from "~/server/channels.server";
+import type { ChangeEvent } from "react";
 
-export const loader = async ({ params }: LoaderArgs) => {
+export const loader = async ({  params }: LoaderArgs) => {
   const teamId = params.teamId;
   invariant(
     teamId,
     "Could not find teamId from loaderArgs.params. Make sure the filename is $teamId"
   );
+
   const channels = await getChannels(teamId);
 
   if (channels instanceof Error) {
@@ -19,14 +26,45 @@ export const loader = async ({ params }: LoaderArgs) => {
   return json({ teamId, channels });
 };
 
+const SELECT_NEW_CHANNEL_ID = "select-new-channel";
+
 const TeamHomePage = () => {
   const loaderData = useLoaderData<typeof loader>();
+  const navigate = useNavigate();
+  const params = useParams();
+
+  const activeChannelId = params.channelId;
+  const selectDefaultValue = activeChannelId || SELECT_NEW_CHANNEL_ID;
+
+  const handleChannelChangeEvent = (e: ChangeEvent<HTMLSelectElement>) => {
+    e.preventDefault();
+    const newChannelId = e.currentTarget.value;
+
+    if (newChannelId === SELECT_NEW_CHANNEL_ID) {
+      navigate(`/${loaderData.teamId}`);
+      return;
+    }
+
+    navigate(`/${loaderData.teamId}/${newChannelId}`);
+  };
 
   return (
     <div className="pb-14">
       <Outlet />
       <nav className="fixed bottom-0 left-0 right-0 bg-blue-500 h-14 grid place-items-center px-3 py-2">
-        <select className="w-full rounded-md ">
+        <select
+          className="w-full rounded-md"
+          onChange={handleChannelChangeEvent}
+          defaultValue={selectDefaultValue}
+        >
+          <option
+            value={SELECT_NEW_CHANNEL_ID}
+            className="text-base"
+            hidden
+            disabled
+          >
+            Select New Channel
+          </option>
           {loaderData.channels.map((channel) => {
             return (
               <option

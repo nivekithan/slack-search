@@ -695,20 +695,16 @@ select {
   right: 0px;
 }
 
-.mt-1 {
-  margin-top: 0.25rem;
-}
-
-.-mt-1 {
-  margin-top: -0.25rem;
-}
-
 .flex {
   display: flex;
 }
 
 .grid {
   display: grid;
+}
+
+.hidden {
+  display: none;
 }
 
 .h-9 {
@@ -805,22 +801,12 @@ select {
   padding-bottom: 0.5rem;
 }
 
-.px-4 {
-  padding-left: 1rem;
-  padding-right: 1rem;
-}
-
-.px-2 {
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
+.pt-3 {
+  padding-top: 0.75rem;
 }
 
 .pb-14 {
   padding-bottom: 3.5rem;
-}
-
-.pt-3 {
-  padding-top: 0.75rem;
 }
 
 .text-base {
