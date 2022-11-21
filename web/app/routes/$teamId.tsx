@@ -49,13 +49,15 @@ const TeamHomePage = () => {
   };
 
   return (
-    <div className="pb-14">
+    <div className="pb-24">
       <Outlet />
-      <nav className="fixed bottom-0 left-0 right-0 bg-blue-500 h-14 grid place-items-center px-3 py-2">
+      <nav className="fixed bottom-0 left-0 right-0 bg-blue-500 max-h-24 flex flex-col gap-y-2 px-3 py-2">
+        <label htmlFor="channel-select" className="text-white">Select Channel</label>
         <select
           className="w-full rounded-md"
           onChange={handleChannelChangeEvent}
           defaultValue={selectDefaultValue}
+          id="channel-select"
         >
           <option
             value={SELECT_NEW_CHANNEL_ID}
