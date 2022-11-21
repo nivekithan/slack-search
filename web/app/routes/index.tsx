@@ -1,16 +1,15 @@
+import { Link } from "@remix-run/react";
+import { ChevronLeft } from "~/components/icons/chevronLeft";
+
 export default function Index() {
+  const disabled = true;
+
   return (
-    <div className="h-screen flex flex-col justify-end">
-      <div className="bg-blue-500 flex-grow overflow-y-auto">
-        {(() => {
-          return Array(90).fill(undefined).map((_, i) => {
-            return (
-              <div className="h-[100px] bg-rose-300" key={i}> THe number is {i}</div>
-            );
-          });
-        })()}
-      </div>
-      <div className="h-10 bg-red-500 "></div>
+    <div className="h-screen grid place-items-center ">
+      <Link className="group border-2 px-3 py-2 rounded-md flex items-center gap-x-2 border-black hover:border-blue-600" to="/previous">
+        <ChevronLeft  className="w-4 h-4 group-hover:text-blue-600 " />
+        <span className="group-hover:text-blue-600">Previous Page</span>
+      </Link>
     </div>
   );
 }
