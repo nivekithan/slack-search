@@ -8,6 +8,7 @@ specifiers:
   '@remix-run/serve': ^1.7.6
   '@remix-run/vercel': ^1.7.6
   '@tailwindcss/forms': ^0.5.3
+  '@tanstack/react-virtual': 3.0.0-beta.23
   '@types/react': ^18.0.25
   '@types/react-dom': ^18.0.9
   '@vercel/node': ^2.6.3
@@ -27,6 +28,7 @@ dependencies:
   '@remix-run/node': 1.7.6_biqbaboplfbrettd7655fr4n2y
   '@remix-run/react': 1.7.6_biqbaboplfbrettd7655fr4n2y
   '@remix-run/vercel': 1.7.6_lplf4c5c6rnz4qhkbn46yx7ery
+  '@tanstack/react-virtual': 3.0.0-beta.23_react@18.2.0
   '@vercel/node': 2.6.3
   react: 18.2.0
   react-dom: 18.2.0_react@18.2.0
@@ -1782,6 +1784,21 @@ packages:
       mini-svg-data-uri: 1.4.4
       tailwindcss: 3.2.4_postcss@8.4.19
     dev: true
+
+  /@tanstack/react-virtual/3.0.0-beta.23_react@18.2.0:
+    resolution: {integrity: sha512-FurqZJD7oSXLtL5NP0YQKXNEY+2qczXjzxmxkD51ZO8ykyr2z62IRNfvpOyly2CPLg+M346mA/Ul2hlx4R3KPw==}
+    engines: {node: '>=12'}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      '@tanstack/virtual-core': 3.0.0-beta.23
+      react: 18.2.0
+    dev: false
+
+  /@tanstack/virtual-core/3.0.0-beta.23:
+    resolution: {integrity: sha512-xQfJgz4mdaxifPjOqUBYAar60UAQTrED2SpS0VI5AZvxYI4NDTxx5cFrjaP4baKY3UnVc8IsGFbqr8Q/LZNMag==}
+    engines: {node: '>=12'}
+    dev: false
 
   /@testing-library/dom/8.19.0:
     resolution: {integrity: sha512-6YWYPPpxG3e/xOo6HIWwB/58HukkwIVTOaZ0VwdMVjhRUX/01E4FtQbck9GazOOj7MXHc5RBzMrU86iBJHbI+A==}

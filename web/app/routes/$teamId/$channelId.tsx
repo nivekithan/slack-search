@@ -5,7 +5,9 @@ import invariant from "tiny-invariant";
 import { capitalizeFirstLetter } from "~/common/utils.common";
 import { Topic } from "~/components/topic";
 import { getTopics } from "~/server/topics.server";
+import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import routeStyles from "~/styles/routes/$teamId/$channelId.css";
+import { useLayoutEffect, useRef } from "react";
 
 export const links: LinksFunction = () => {
   return [{ rel: "stylesheet", href: routeStyles }];
@@ -34,30 +36,58 @@ export const loader = async ({ params }: LoaderArgs) => {
 };
 
 const TopicsPage = () => {
-  const loaderData = useLoaderData<typeof loader>();
+  const { topics, teamId, channelId } = useLoaderData<typeof loader>();
+
+  const parentRef = useRef<HTMLElement>(null);
+
+  const parentOffsetRef = useRef(0);
+
+  useLayoutEffect(() => {
+    parentOffsetRef.current = parentRef.current?.offsetTop ?? 0;
+  });
+
+  const virtualizer = useWindowVirtualizer({
+    count: topics.length,
+    estimateSize: () => 300,
+    scrollMargin: parentOffsetRef.current,
+  });
 
   return (
     <main>
-      <ol className="flex flex-col gap-y-6">
-        {loaderData.topics.map((topic) => {
+      <ol
+        style={{ height: virtualizer.getTotalSize() }}
+        className="w-full relative"
+      >
+        {virtualizer.getVirtualItems().map((virtualRow) => {
+          const topic = topics[virtualRow.index];
           const avaterLetter = topic.slackUser.userRealName
+
             .slice(0, 2)
             .toUpperCase();
           const topicCreatedAt = new Date(topic.createdAt);
           const capitalizedUserName = capitalizeFirstLetter(
             topic.slackUser.userRealName
           );
-          const viewReplyLinkTo = `/${loaderData.teamId}/${loaderData.channelId}/${topic.messageTs}`;
-
+          const viewReplyLinkTo = `/${teamId}/${channelId}/${topic.messageTs}`;
           return (
-            <Topic
-              key={topic.id}
-              message={topic.message}
-              avatarLetter={avaterLetter}
-              createdAt={topicCreatedAt}
-              username={capitalizedUserName}
-              viewReplyLinkTo={viewReplyLinkTo}
-            />
+            <div
+              key={virtualRow.key}
+              data-index={virtualRow.index}
+              ref={virtualizer.measureElement}
+              className="absolute top-0 left-o w-full"
+              style={{ transform: `translateY(${virtualRow.start}px)` }}
+            >
+              <div className="mb-6">
+                <Topic
+                  key={topic.id}
+                  message={topic.message}
+                  avatarLetter={avaterLetter}
+                  createdAt={topicCreatedAt}
+                  username={capitalizedUserName}
+                  viewReplyLinkTo={viewReplyLinkTo}
+                />
+              </div>
+            </div>
           );
         })}
       </ol>
