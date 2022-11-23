@@ -1,6 +1,11 @@
 import { Link } from "@remix-run/react";
+import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { formatRelative } from "date-fns";
+import { useEffect, useRef } from "react";
+import invariant from "tiny-invariant";
+import type { z } from "zod";
 import { capitalizeFirstLetter } from "~/common/utils.common";
+import type { TopicSchema } from "~/server/topics.server";
 
 export type TopicProps = {
   message: string;
@@ -36,5 +41,95 @@ export const Topic = ({
         View Replies
       </Link>
     </div>
+  );
+};
+
+export type InfiniteScrollTopicsProps = {
+  topics: z.infer<typeof TopicSchema>[];
+  onLoadMore: () => void;
+  scrollMargin: number;
+  teamId: string;
+  channelId: string;
+};
+
+export const InfiniteWindowScrollTopics = ({
+  topics,
+  onLoadMore,
+  scrollMargin,
+  teamId,
+  channelId,
+}: InfiniteScrollTopicsProps) => {
+  const currentOffsetWhichHaveLoaded = useRef(0);
+
+  const virtualizer = useWindowVirtualizer({
+    count: topics.length,
+    estimateSize: () => 300,
+    scrollMargin: scrollMargin,
+  });
+
+  const indexAfterWhichToLoadMore = topics.length - 3;
+  let newOffset = currentOffsetWhichHaveLoaded.current;
+
+  if (virtualizer.range.endIndex >= indexAfterWhichToLoadMore) {
+    const newOffsetToSet = topics.length - 1;
+
+    if (typeof newOffsetToSet === "undefined") {
+      throw new Error("It should not happen");
+    }
+
+    newOffset = newOffsetToSet;
+  }
+
+  useEffect(() => {
+    if (newOffset === currentOffsetWhichHaveLoaded.current) return;
+
+    const lastTopic = topics.at(-1);
+    const lastTopicCursorKey = lastTopic?.cursorKey;
+
+    invariant(
+      typeof lastTopicCursorKey !== "undefined",
+      "It should not happen"
+    );
+    onLoadMore();
+    currentOffsetWhichHaveLoaded.current = newOffset;
+  }, [newOffset, onLoadMore, topics]);
+
+  return (
+    <ol
+      className="w-full relative"
+      style={{ height: virtualizer.getTotalSize() }}
+    >
+      {virtualizer.getVirtualItems().map((virtualRow) => {
+        const topic = topics[virtualRow.index];
+        const avaterLetter = topic.slackUser.userRealName
+          .slice(0, 2)
+          .toUpperCase();
+        const topicCreatedAt = new Date(topic.createdAt);
+        const capitalizedUserName = capitalizeFirstLetter(
+          topic.slackUser.userRealName
+        );
+        const viewReplyLinkTo = `/${teamId}/${channelId}/${topic.messageTs}`;
+
+        return (
+          <div
+            key={virtualRow.key}
+            data-index={virtualRow.index}
+            ref={virtualizer.measureElement}
+            className="absolute top-0 left-0 w-full"
+            style={{ transform: `translateY(${virtualRow.start}px)` }}
+          >
+            <div className="mb-6">
+              <Topic
+                message={topic.message}
+                avatarLetter={avaterLetter}
+                createdAt={topicCreatedAt}
+                username={capitalizedUserName}
+                viewReplyLinkTo={viewReplyLinkTo}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </ol>
   );
 };

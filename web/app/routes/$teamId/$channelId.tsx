@@ -2,12 +2,16 @@ import type { LinksFunction, LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useFetcher, useLoaderData } from "@remix-run/react";
 import invariant from "tiny-invariant";
-import { capitalizeFirstLetter } from "~/common/utils.common";
-import { Topic } from "~/components/topic";
+import { InfiniteWindowScrollTopics } from "~/components/topic";
 import { getTopics } from "~/server/topics.server";
-import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import routeStyles from "~/styles/routes/$teamId/$channelId.css";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
 export const links: LinksFunction = () => {
   return [{ rel: "stylesheet", href: routeStyles }];
@@ -73,59 +77,29 @@ export const loader = async ({ params, request }: LoaderArgs) => {
 
 const TopicsPage = () => {
   const { topics, teamId, channelId } = useLoaderData<typeof loader>();
-
   invariant(Array.isArray(topics), "This is should never happen");
-
   const [allTopics, setAllTopics] = useState(topics);
 
   const parentRef = useRef<HTMLElement>(null);
-
   const parentOffsetRef = useRef(0);
 
-  const currentOffsetWhichHaveLoaded = useRef(0);
   const fetcher = useFetcher<typeof loader>();
 
   useLayoutEffect(() => {
     parentOffsetRef.current = parentRef.current?.offsetTop ?? 0;
   });
 
-  const virtualizer = useWindowVirtualizer({
-    count: allTopics.length,
-    estimateSize: () => 300,
-    scrollMargin: parentOffsetRef.current,
-  });
-
-  const indexAfterWhichToLoadMore = allTopics.length - 3;
-  let newOffset = currentOffsetWhichHaveLoaded.current;
-
-  if (virtualizer.range.endIndex >= indexAfterWhichToLoadMore) {
-    const newOffsetToSet = allTopics.length - 1;
-
-    if (typeof newOffsetToSet === "undefined") {
-      throw new Error("It should not happen");
-    }
-
-    newOffset = newOffsetToSet;
-  }
-
-  useEffect(() => {
-    if (newOffset === currentOffsetWhichHaveLoaded.current) return;
-
+  const fetchMoreTopics = useCallback(() => {
     const lastTopic = allTopics.at(-1);
     const lastTopicCursorKey = lastTopic?.cursorKey;
-
-    invariant(
-      typeof lastTopicCursorKey !== "undefined",
-      "It should not happen"
-    );
 
     const qs = new URLSearchParams([
       ["take", String(5)],
       ["cursor", String(lastTopicCursorKey)],
     ]);
+
     fetcher.load(`/${teamId}/${channelId}?${qs.toString()}`);
-    currentOffsetWhichHaveLoaded.current = newOffset;
-  }, [newOffset, fetcher, allTopics, teamId, channelId]);
+  }, [allTopics, channelId, fetcher, teamId]);
 
   useEffect(() => {
     const fetcherData = fetcher.data;
@@ -141,44 +115,14 @@ const TopicsPage = () => {
   }, [fetcher.data]);
 
   return (
-    <main>
-      <ol
-        style={{ height: virtualizer.getTotalSize() }}
-        className="w-full relative"
-      >
-        {virtualizer.getVirtualItems().map((virtualRow) => {
-          const topic = allTopics[virtualRow.index];
-          const avaterLetter = topic.slackUser.userRealName
-
-            .slice(0, 2)
-            .toUpperCase();
-          const topicCreatedAt = new Date(topic.createdAt);
-          const capitalizedUserName = capitalizeFirstLetter(
-            topic.slackUser.userRealName
-          );
-          const viewReplyLinkTo = `/${teamId}/${channelId}/${topic.messageTs}`;
-          return (
-            <div
-              key={virtualRow.key}
-              data-index={virtualRow.index}
-              ref={virtualizer.measureElement}
-              className="absolute top-0 left-o w-full"
-              style={{ transform: `translateY(${virtualRow.start}px)` }}
-            >
-              <div className="mb-6">
-                <Topic
-                  key={topic.id}
-                  message={topic.message}
-                  avatarLetter={avaterLetter}
-                  createdAt={topicCreatedAt}
-                  username={capitalizedUserName}
-                  viewReplyLinkTo={viewReplyLinkTo}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </ol>
+    <main ref={parentRef}>
+      <InfiniteWindowScrollTopics
+        teamId={teamId}
+        channelId={channelId}
+        scrollMargin={parentOffsetRef.current}
+        topics={allTopics}
+        onLoadMore={fetchMoreTopics}
+      />
     </main>
   );
 };

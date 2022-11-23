@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { BACKEND_API_URL } from "./constant.server";
 import { SlackUserSchema } from "./slackUser.server";
-import { ZodStringToDate } from "./utils.server";
 
 export type GetTopicsArgs = {
   teamId: string;
@@ -38,9 +37,9 @@ export const TopicSchema = z.object({
   repliesCount: z.number(),
   slackUser: SlackUserSchema,
   message: z.string(),
-  createdAt: z.string().transform(ZodStringToDate),
-  updatedAt: z.string().transform(ZodStringToDate),
-  cursorKey : z.number(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  cursorKey: z.number(),
 });
 
 export const AllTopicsSchema = z.array(TopicSchema);

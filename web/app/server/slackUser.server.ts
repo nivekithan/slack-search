@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { ZodStringToDate } from "./utils.server";
 
 export const SlackUserSchema = z.object({
   id: z.string(),
@@ -7,6 +6,6 @@ export const SlackUserSchema = z.object({
   userId: z.string(),
   userRealName: z.string(),
   userNickName: z.string(),
-  createdAt: z.string().transform(ZodStringToDate),
-  updatedAt: z.string().transform(ZodStringToDate),
+  createdAt: z.string(),
+  updatedAt: z.string(),
 });
