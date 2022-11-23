@@ -15,7 +15,7 @@ export const links: LinksFunction = () => {
 
 const getTakeAndCursor = (url: URL) => {
   const searchParams = url.searchParams;
-  const takeStr = searchParams.get("take") || "10";
+  const takeStr = searchParams.get("take") || "5";
   const takeInt = Number.isNaN(parseInt(takeStr, 10))
     ? 10
     : parseInt(takeStr, 10);
@@ -27,6 +27,13 @@ const getTakeAndCursor = (url: URL) => {
     : parseInt(cursorStr, 10);
 
   return { take: takeInt, cursor: cursorInt };
+};
+
+const getIsTakeOrCursorSearchParamPresent = (url: URL) => {
+  const isTakePresent = url.searchParams.has("take");
+  const isCursorPresent = url.searchParams.has("cursor");
+
+  return isTakePresent || isCursorPresent;
 };
 
 export const loader = async ({ params, request }: LoaderArgs) => {
@@ -43,19 +50,32 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   );
 
   const url = new URL(request.url);
+  const isTakeOrCursorSearchParamsPresent =
+    getIsTakeOrCursorSearchParamPresent(url);
   const { take, cursor } = getTakeAndCursor(url);
 
   const topics = await getTopics({ channelId, teamId, take, cursor });
 
-  if (topics instanceof Error) {
+  const isTopicError = topics instanceof Error;
+
+  if (isTopicError && !isTakeOrCursorSearchParamsPresent) {
+    console.log(topics);
     throw new Response("NOT FOUND", { status: 404 });
   }
 
-  return json({ topics, teamId, channelId });
+  return json({
+    error: isTopicError,
+    topics: isTopicError ? null : topics,
+    teamId,
+    channelId,
+  });
 };
 
 const TopicsPage = () => {
   const { topics, teamId, channelId } = useLoaderData<typeof loader>();
+
+  invariant(Array.isArray(topics), "This is should never happen");
+
   const [allTopics, setAllTopics] = useState(topics);
 
   const parentRef = useRef<HTMLElement>(null);
@@ -75,10 +95,11 @@ const TopicsPage = () => {
     scrollMargin: parentOffsetRef.current,
   });
 
-  const indexAfterWhichToLoadMore = topics.length - 3;
+  const indexAfterWhichToLoadMore = allTopics.length - 3;
   let newOffset = currentOffsetWhichHaveLoaded.current;
+
   if (virtualizer.range.endIndex >= indexAfterWhichToLoadMore) {
-    const newOffsetToSet = topics.at(-1)?.cursorKey;
+    const newOffsetToSet = allTopics.length - 1;
 
     if (typeof newOffsetToSet === "undefined") {
       throw new Error("It should not happen");
@@ -90,7 +111,7 @@ const TopicsPage = () => {
   useEffect(() => {
     if (newOffset === currentOffsetWhichHaveLoaded.current) return;
 
-    const lastTopic = topics.at(-1);
+    const lastTopic = allTopics.at(-1);
     const lastTopicCursorKey = lastTopic?.cursorKey;
 
     invariant(
@@ -99,18 +120,23 @@ const TopicsPage = () => {
     );
 
     const qs = new URLSearchParams([
-      ["take", String(10)],
+      ["take", String(5)],
       ["cursor", String(lastTopicCursorKey)],
     ]);
     fetcher.load(`/${teamId}/${channelId}?${qs.toString()}`);
     currentOffsetWhichHaveLoaded.current = newOffset;
-  }, [newOffset, fetcher, topics, teamId, channelId]);
+  }, [newOffset, fetcher, allTopics, teamId, channelId]);
 
   useEffect(() => {
     const fetcherData = fetcher.data;
 
     if (fetcherData) {
-      setAllTopics((prevTopics) => [...prevTopics, ...fetcherData.topics]);
+      const { topics } = fetcherData;
+
+      if (Array.isArray(topics)) {
+        setAllTopics((prevTopics) => [...prevTopics, ...topics]);
+        return;
+      }
     }
   }, [fetcher.data]);
 
