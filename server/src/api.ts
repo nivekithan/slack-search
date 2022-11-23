@@ -145,6 +145,7 @@ api.get(
           updatedAt: topic.slackUser.updatedAt,
         },
         message: topic.message,
+        cursorKey: topic.cursorKey,
         createdAt: topic.createdAt,
         updatedAt: topic.updatedAt,
       };

@@ -6,12 +6,25 @@ import { ZodStringToDate } from "./utils.server";
 export type GetTopicsArgs = {
   teamId: string;
   channelId: string;
+  take: number;
+  cursor?: number;
 };
 
-export const getTopicUrl = ({ teamId, channelId }: GetTopicsArgs) => {
+export const getTopicUrl = ({
+  teamId,
+  channelId,
+  take,
+  cursor,
+}: GetTopicsArgs) => {
   const endpoint = `${BACKEND_API_URL}/${teamId}/${channelId}/topics`;
 
   const url = new URL(endpoint);
+
+  url.searchParams.set("take", String(take));
+
+  if (cursor) {
+    url.searchParams.set("cursor", String(cursor));
+  }
 
   return url;
 };
@@ -27,13 +40,18 @@ export const TopicSchema = z.object({
   message: z.string(),
   createdAt: z.string().transform(ZodStringToDate),
   updatedAt: z.string().transform(ZodStringToDate),
+  cursorKey : z.number(),
 });
 
 export const AllTopicsSchema = z.array(TopicSchema);
 
-export const getTopics = async ({ teamId, channelId }: GetTopicsArgs) => {
-  const topicUrl = getTopicUrl({ teamId, channelId });
-  topicUrl.searchParams.set("take", "10");
+export const getTopics = async ({
+  teamId,
+  channelId,
+  take,
+  cursor,
+}: GetTopicsArgs) => {
+  const topicUrl = getTopicUrl({ teamId, channelId, take, cursor });
 
   const topicEndpointRes = await fetch(topicUrl);
 
