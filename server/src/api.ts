@@ -189,7 +189,7 @@ api.get(
         topicMessageTs: messageTs,
       },
       orderBy: {
-        createdAt: "desc",
+        createdAt: "asc",
       },
       include: {
         slackUser: true,
