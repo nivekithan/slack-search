@@ -4,15 +4,16 @@ import { formatRelative } from "date-fns";
 import { useEffect, useRef } from "react";
 import invariant from "tiny-invariant";
 import type { z } from "zod";
+import type { TopicSchema } from "~/common/topic.common";
+import { extractTopicProps } from "~/common/topic.common";
 import { capitalizeFirstLetter } from "~/common/utils.common";
-import type { TopicSchema } from "~/server/topics.server";
 
 export type TopicProps = {
   message: string;
   avatarLetter: string;
   username: string;
   createdAt: Date;
-  viewReplyLinkTo: string;
+  viewReplyLinkTo?: string;
 };
 
 export const Topic = ({
@@ -34,12 +35,14 @@ export const Topic = ({
       <h1 className="__username font-semibold">{username}</h1>
       <p className="__time font-light text-sm text-gray-600">{relativeTime}</p>
       <p className="__message">{message}</p>
-      <Link
-        to={viewReplyLinkTo}
-        className="__view_replies text-sm text-blue-600 pt-3 hover:underline"
-      >
-        View Replies
-      </Link>
+      {viewReplyLinkTo ? (
+        <Link
+          to={viewReplyLinkTo}
+          className="__view_replies text-sm text-blue-600 pt-3 hover:underline"
+        >
+          View Replies
+        </Link>
+      ) : null}
     </div>
   );
 };
@@ -101,15 +104,9 @@ export const InfiniteWindowScrollTopics = ({
     >
       {virtualizer.getVirtualItems().map((virtualRow) => {
         const topic = topics[virtualRow.index];
-        const avaterLetter = topic.slackUser.userRealName
-          .slice(0, 2)
-          .toUpperCase();
-        const topicCreatedAt = new Date(topic.createdAt);
-        const capitalizedUserName = capitalizeFirstLetter(
-          topic.slackUser.userRealName
-        );
+        const { avaterLetter, capitalizedUserName, topicCreatedAt } =
+          extractTopicProps(topic);
         const viewReplyLinkTo = `/${teamId}/${channelId}/${topic.messageTs}`;
-
         return (
           <div
             key={virtualRow.key}

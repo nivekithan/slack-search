@@ -163,6 +163,9 @@ api.get(
 
     const message = await prisma.message.findUnique({
       where: { channelId_messageTs_teamId: { channelId, messageTs, teamId } },
+      include: {
+        slackUser: true,
+      },
     });
 
     if (!message) {
@@ -187,6 +190,9 @@ api.get(
       },
       orderBy: {
         createdAt: "desc",
+      },
+      include: {
+        slackUser: true,
       },
     });
 
